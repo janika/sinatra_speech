@@ -6,7 +6,7 @@ rails server
  curl -X POST  http://localhost:4567/recognizer
 
 2. send data 
- curl -X POST -F"file=@/home/user/test/data/goforward.raw" http://localhost:4567/recognizer/ <session_id>
+ curl -X POST -F"file=@/home/user/test/data/speech.raw" http://localhost:4567/recognizer/ <session_id>
 
 3. get data 
  curl  http://localhost:4567/recognizer/ <session_id>
