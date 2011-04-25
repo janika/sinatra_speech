@@ -43,7 +43,7 @@ put '/recognizer/:id' do
     end
     
     recognizer = RecognizerPool.get_for_session(session.id)  
-    #recognizer.work_with_file(file, session)
+    recognizer.work_with_file(file, session)
     builder do |xml|
       xml.instruct! :xml, :version => '1.0'
       xml.rss :version => "2.0" do

@@ -1,6 +1,6 @@
 Using pocketsphinx, Gst, ruby 1.8.7 (gst not working with ruby 1.9)
 To start the server go to the project root and type in terminal: 
-rails server
+ruby recognizer_api.rb
 
 1. create session and get id
  curl -X POST  http://localhost:4567/recognizer
