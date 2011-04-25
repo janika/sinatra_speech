@@ -29,7 +29,7 @@ module RecognizerPool
     if pool[:idle].size > 0
       pool[:idle].pop
     elsif (pool.size - 1) < MAX_RECOGNIZERS
-      SpeechRecognition::Recognizer.new
+      Recognizer.new
     end
   end
   

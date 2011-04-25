@@ -1,4 +1,4 @@
-%w(gst rubygems sinatra lib/speech_recognition lib/recognizer_pool lib/session_pool lib/recognizer_session).each{|lib| require lib}
+%w(gst rubygems sinatra lib/recognizer lib/recognizer_pool lib/session_pool lib/recognizer_session).each{|lib| require lib}
 Gst.init
 
 configure do
@@ -11,7 +11,7 @@ configure do
   $session_pool = {}
 
   RecognizerPool::NUMBER_OF_INITIAL_RECOGNIZERS.times do 
-    RecognizerPool.pool[:idle] << SpeechRecognition::Recognizer.new
+    RecognizerPool.pool[:idle] << Recognizer.new
   end
  
 end
@@ -37,7 +37,7 @@ end
 put '/recognizer/:id' do
   session = SessionPool.find_open_by_id(params[:id])
   if session && !params[:file].nil?
-    file = "tmp/#{params[:file][:filename]}"
+    file = "#{File.dirname(__FILE__)}/tmp/#{params[:file][:filename]}"
     File.open(file, 'wb') do |f|
       f.write params[:file][:tempfile].read
     end
