@@ -14,17 +14,6 @@ class RecognizerSession
   def closed?
     !closed_at.nil?
   end
-
-  def to_hash
-    {
-      :closed_at => self.closed_at, 
-      :created_at => self.created_at, 
-      :result => self.result, 
-      :id => self.id,
-      :system_message => self.system_message
-    }
-    
-  end
   
   private
   

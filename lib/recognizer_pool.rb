@@ -9,7 +9,7 @@ module RecognizerPool
   
   def self.get_for_session(session_id)
     recognizer = pool.fetch(session_id)
-    if recognizer.present?
+    if !recognizer.nil?
       return recognizer
     else
       raise "Recognizer not found"   
@@ -18,7 +18,7 @@ module RecognizerPool
   
   def self.add_new_to_active_pool(session)
     recognizer = get_recognizer
-    if recognizer.present?
+    if !recognizer.nil?
       pool[session.id] = recognizer
     else
       raise "No free recognizers"
