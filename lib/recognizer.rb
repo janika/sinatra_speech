@@ -1,5 +1,7 @@
 class Recognizer
   BUFFER_SIZE =  2*16000
+  REQUEST_FINAL = "data_end"
+  REQUEST_NOT_COMPLETED = "data"
   
   def initialize()
     @result = ""
@@ -63,18 +65,23 @@ class Recognizer
     @pipeline.stop
     return @result
   end
+  
+  def self.allowed_put_request_types
+    [REQUEST_NOT_COMPLETED, REQUEST_FINAL]
+  end
       
-  def work_with_file(file, session)
+  def work_with_file(file, session, request_type)
     File.open(file, "r") do |f|
       while buff = f.read(BUFFER_SIZE)
 	feed_data(buff)
 	session.result =  self.result
       end
     end
-    
-    feed_end
-    wait_final_result
-    session.result = self.result
-    session.closed_at = Time.now
+    if request_type == REQUEST_FINAL
+      feed_end
+      wait_final_result
+      session.result = self.result
+      session.closed_at = Time.now
+    end
   end
 end
