@@ -1,4 +1,4 @@
-%w(gst rubygems sinatra lib/recognizer lib/recognizer_pool lib/session_pool lib/recognizer_session).each{|lib| require lib}
+%w(gst rubygems builder sinatra lib/recognizer lib/recognizer_pool lib/session_pool lib/recognizer_session).each{|lib| require lib}
 Gst.init
 
 configure do
@@ -17,84 +17,56 @@ configure do
 end
 
 post '/recognizer' do
-  new_session = RecognizerSession.new
-  SessionPool.add_to_pool(new_session)
-  RecognizerPool.add_new_to_active_pool(new_session)
-  builder do |xml|
-    xml.instruct! :xml, :version => '1.0'
-    xml.rss :version => "2.0" do
-      xml.recognizer_session do
-	xml.closed_at new_session.closed_at
-	xml.created_at new_session.created_at
-	xml.result new_session.result
-	xml.id new_session.id
-	xml.system_message new_session.system_message
-      end
-    end
+  begin
+    new_session = RecognizerSession.new
+    SessionPool.add_to_pool(new_session)
+    RecognizerPool.add_new_to_active_pool(new_session)
+    new_session.to_xml
+  rescue Exception => e
+    error_to_xml(e.message)
   end
 end
 
 put '/recognizer/:id' do
-  session = SessionPool.find_open_by_id(params[:id])
-  if session && !params[:file].nil?
-    file = "#{File.dirname(__FILE__)}/tmp/#{params[:file][:filename]}"
-    File.open(file, 'wb') do |f|
-      f.write params[:file][:tempfile].read
-    end
-    
-    recognizer = RecognizerPool.get_for_session(session.id)  
-    recognizer.work_with_file(file, session)
-    builder do |xml|
-      xml.instruct! :xml, :version => '1.0'
-      xml.rss :version => "2.0" do
-	xml.recognizer_session do
-	  xml.closed_at session.closed_at
-	  xml.created_at session.created_at
-	  xml.result session.result
-	  xml.id session.id
-	  xml.system_message session.system_message
-	end
+  begin
+    session = SessionPool.find_open_by_id(params[:id])
+    if session && !params[:file].nil?
+      file = "#{File.dirname(__FILE__)}/tmp/#{params[:file][:filename]}"
+      File.open(file, 'wb') do |f|
+	f.write params[:file][:tempfile].read
       end
+      recognizer = RecognizerPool.get_for_session(session.id)  
+      recognizer.work_with_file(file, session)
+      session.to_xml
+    else
+      error_to_xml "Session with id #{params[:id]} not found"
     end
-  else
-    builder do |xml|
-      xml.instruct! :xml, :version => '1.0'
-      xml.rss :version => "2.0" do
-	xml.error do
-	  xml.message "Session with id #{params[:id]} not found"
-	end
-      end
-    end
+  rescue Exception => e
+    error_to_xml(e.message)
   end
 end
 
 get '/recognizer/:id' do
-  session = SessionPool.find_by_id(params[:id])
-  if session
-    builder do |xml|
-      xml.instruct! :xml, :version => '1.0'
-      xml.rss :version => "2.0" do
-	xml.recognizer_session do
-	  xml.closed_at session.closed_at
-	  xml.created_at session.created_at
-	  xml.result session.result
-	  xml.id session.id
-	  xml.system_message session.system_message
-	end
-      end
+  begin
+    session = SessionPool.find_by_id(params[:id])
+    if session
+      session.to_xml
+    else
+      error_to_xml("Session with id #{params[:id]} not found")
     end
-  else
-    builder do |xml|
-      xml.instruct! :xml, :version => '1.0'
-      xml.rss :version => "2.0" do
-	xml.error do
-	  xml.message "Session with id #{params[:id]} not found"
-	end
-      end
-    end
+  rescue Exception => e
+    error_to_xml(e.message)
   end
 end
 
+def error_to_xml(message)
+  builder do |xml|
+    xml.instruct! :xml, :version => '1.0'
+    xml.error do
+      xml.message message
+    end
+  end  
+end
 
 
 

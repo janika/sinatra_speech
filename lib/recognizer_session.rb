@@ -15,6 +15,19 @@ class RecognizerSession
     !closed_at.nil?
   end
   
+  def to_xml
+    builder = Builder::XmlMarkup.new(:indent=>2)
+    builder.instruct! :xml, :version => '1.0'
+    xml = builder.recognizer_session  do |b| 
+      b.closed_at(self.closed_at)
+      b.created_at(self.created_at) 
+      b.result(self.result)
+      b.id(self.id)
+      b.system_message(self.system_message)
+    end
+    xml
+  end
+  
   private
   
   def id=(value)
