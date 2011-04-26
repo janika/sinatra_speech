@@ -69,19 +69,21 @@ class Recognizer
   def self.allowed_put_request_types
     [REQUEST_NOT_COMPLETED, REQUEST_FINAL]
   end
+  
+  def end_feed(session)
+    feed_end
+    wait_final_result
+    session.result = self.result
+    session.closed_at = Time.now
+  end
       
-  def work_with_file(file, session, request_type)
-    File.open(file, "r") do |f|
-      while buff = f.read(BUFFER_SIZE)
-	feed_data(buff)
-	session.result =  self.result
-      end
+  def work_with_data(data, session, request_type)
+    while buff = data.read(BUFFER_SIZE)
+      feed_data(buff)
+      session.result =  self.result
     end
     if request_type == REQUEST_FINAL
-      feed_end
-      wait_final_result
-      session.result = self.result
-      session.closed_at = Time.now
+      end_feed(session)
     end
   end
 end

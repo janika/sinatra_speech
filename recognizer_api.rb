@@ -34,13 +34,10 @@ put '/recognizer/:id' do
       error_to_xml("X-Recognizer-Request-Type must be present and set to '#{Recognizer::REQUEST_NOT_COMPLETED}' or '#{ Recognizer::REQUEST_FINAL}'")
     else 
       session = SessionPool.find_open_by_id(params[:id])
-      if session && !params[:file].nil?
-	file = "#{File.dirname(__FILE__)}/tmp/#{params[:file][:filename]}"
-	File.open(file, 'wb') do |f|
-	  f.write params[:file][:tempfile].read
-	end
+      data = request.body
+      if session && !data.nil?
 	recognizer = RecognizerPool.get_for_session(session.id)  
-	recognizer.work_with_file(file, session, request_type)
+	recognizer.work_with_data(data, session, request_type)
 	session.to_xml
       else
 	error_to_xml "Session with id #{params[:id]} not found"
