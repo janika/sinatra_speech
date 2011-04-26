@@ -6,10 +6,10 @@ To start the server go to the project root and type in terminal:
 
 == Requests
 
-1. create session and get id
+=== Create session and get id
  curl -X POST  http://localhost:4567/recognizer
 
-2. send data
+=== Send data
 Request must include header X-Recognizer-Request-Type. 
 
 Possible values are:
@@ -18,7 +18,7 @@ Possible values are:
 
  curl -X POST --data-binary @/home/user/test/data/speech.raw -H "X-Recognizer-Request-Type: data" http://localhost:4567/recognizer/ <session_id> 
 
-3. get result and session data 
+=== Get result and session data 
  curl  http://localhost:4567/recognizer/ <session_id>
 
 == Response
@@ -26,7 +26,7 @@ Possible values are:
 * Response is in xml.
 * For all requests, the successful response containing session data looks like this:
 
-  <?xml version="1.0" encoding="UTF-8"?>
+ <?xml version="1.0" encoding="UTF-8"?>
   <recognizer_session>
     <closed_at></closed_at>
     <created_at>Tue Apr 26 14:30:00 +0300 2011</created_at>
@@ -37,7 +37,7 @@ Possible values are:
 
 * If an error occurs, the response looks like this:
 
-  <?xml version="1.0" encoding="UTF-8"?>
-  <error>
-    <message>X-Recognizer-Request-Type must be present and set to 'data' or 'data_end'</message>
-  </error>
+ <?xml version="1.0" encoding="UTF-8"?>
+ <error>
+   <message>X-Recognizer-Request-Type must be present and set to 'data' or 'data_end'</message>
+ </error>
