@@ -19,8 +19,7 @@ end
 post '/recognizer' do
   begin
     new_session = RecognizerSession.new
-    SessionPool.add_to_pool(new_session)
-    RecognizerPool.add_new_to_active_pool(new_session)
+    new_session.pool!
     new_session.to_xml
   rescue Exception => e
     error_to_xml(e.message)
@@ -30,14 +29,13 @@ end
 put '/recognizer/:id' do
   begin
     request_type = env['HTTP_X_RECOGNIZER_REQUEST_TYPE']
-    if request_type.nil? || !(Recognizer.allowed_put_request_types.include?(request_type))
+    if request_type_not_ok?(request_type)
       error_to_xml("X-Recognizer-Request-Type must be present and set to '#{Recognizer::REQUEST_NOT_COMPLETED}' or '#{ Recognizer::REQUEST_FINAL}'")
-    else 
+    else
       session = SessionPool.find_open_by_id(params[:id])
-      data = request.body
-      if session && !data.nil?
-	recognizer = RecognizerPool.get_for_session(session.id)  
-	recognizer.work_with_data(data, session, request_type)
+      if session
+	session.close! if request_type == Recognizer::REQUEST_FINAL
+	RecognizerPool.recognize_for_session(session, request.body, request_type)
 	session.to_xml
       else
 	error_to_xml "Session with id #{params[:id]} not found"
@@ -68,7 +66,11 @@ helpers do
       xml.error do
 	xml.message message
       end
-    end  
+    end
+  end
+  
+  def request_type_not_ok?(request_type)
+    request_type.nil? || !(Recognizer.allowed_put_request_types.include?(request_type))
   end
 end
 

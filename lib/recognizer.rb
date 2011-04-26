@@ -71,10 +71,10 @@ class Recognizer
     feed_end
     wait_final_result
     session.result = self.result
-    session.closed_at = Time.now
+    session.final_result_created_at = Time.now
   end
       
-  def work_with_data(data, session, request_type)
+  def work_with_data(data, session, request_type)   
     while buff = data.read(BUFFER_SIZE)
       feed_data(buff)
       session.result =  self.result

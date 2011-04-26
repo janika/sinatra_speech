@@ -25,6 +25,15 @@ module RecognizerPool
     end
   end
   
+  def self.recognize_for_session(session, data, request_type)
+    recognizer = RecognizerPool.get_for_session(session.id)
+    if recognizer.nil?
+      raise "Recognizer for session #{session.id} not found."
+    else
+      recognizer.work_with_data(data, session, request_type)
+    end
+  end
+  
   def self.get_recognizer
     if pool[:idle].size > 0
       pool[:idle].pop
