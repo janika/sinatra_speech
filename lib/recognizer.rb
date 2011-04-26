@@ -2,6 +2,11 @@ class Recognizer
   BUFFER_SIZE =  2*16000
   REQUEST_FINAL = "data_end"
   REQUEST_NOT_COMPLETED = "data"
+  attr :result
+  attr :queue
+  attr :pipeline
+  attr :appsrc
+  attr :asr
   
   def initialize()
     @result = ""
@@ -25,45 +30,37 @@ class Recognizer
       @queue.push(1)
     }
     
-    
     @queue = Queue.new
-    
     # This returns when ASR engine has been fully loaded
     @asr.set_property('configured', true)
-    #@pipeline.pause
-    end
-    
-  # Get current (possibly partial) recognition result
-  def result
-    @result
   end
     
-    # Call this before starting a new recognition
-    def clear()
-      @result = ""
-      @queue.clear
-      @pipeline.pause
-    end
-    
-    # Feed new chunk of audio data to the recognizer
-    def feed_data(data)
-      @pipeline.play      
-    buffer=Gst::Buffer.new
-      buffer.data = data
-      @appsrc.push_buffer(buffer)
+  # Call this before starting a new recognition
+  def clear()
+    result = ""
+    queue.clear
+    pipeline.pause
+  end
+  
+  # Feed new chunk of audio data to the recognizer
+  def feed_data(data)
+    pipeline.play      
+    buffer = Gst::Buffer.new
+    buffer.data = data
+    appsrc.push_buffer(buffer)
   end
   
   # Notify recognizer of utterance end
   def feed_end()
-    @appsrc.end_of_stream()
+    appsrc.end_of_stream()
   end
   
   # Wait for the recognizer to recognize the current utterance
   # Returns the final recognition result
   def wait_final_result()
-    @queue.pop
-    @pipeline.stop
-    return @result
+    queue.pop
+    pipeline.stop
+    return result
   end
   
   def self.allowed_put_request_types
@@ -82,6 +79,7 @@ class Recognizer
       feed_data(buff)
       session.result =  self.result
     end
+    
     if request_type == REQUEST_FINAL
       end_feed(session)
     end
