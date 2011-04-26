@@ -5,8 +5,14 @@ ruby recognizer_api.rb
 1. create session and get id
  curl -X POST  http://localhost:4567/recognizer
 
-2. send data 
- curl -X POST -F"file=@/home/user/test/data/speech.raw" http://localhost:4567/recognizer/ <session_id>
+2. send data
+Request must include header X-Recognizer-Request-Type. 
+Possible values are:
+'data' - if you are planning to send more files. The session is kept open.
+'data_end' - if this is the last file. After this session is closed and system will find the final result.
+
+ curl -X POST -F"file=@/home/user/test/data/speech.raw" -H "X-Recognizer-Request-Type: data"
+http://localhost:4567/recognizer/ <session_id> 
 
 3. get data 
  curl  http://localhost:4567/recognizer/ <session_id>
