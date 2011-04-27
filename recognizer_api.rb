@@ -19,7 +19,7 @@ end
 
 post '/recognizer' do
   begin
-    headers "Content-Type"=>"text/xml;charset=utf-8;"
+    set_headers
     new_session = RecognizerSession.new
     new_session.pool!
     new_session.to_xml
@@ -30,19 +30,29 @@ end
 
 put '/recognizer/:id' do
   begin
-    request_type = env['HTTP_X_RECOGNIZER_REQUEST_TYPE']
-    headers "Content-Type"=>"text/xml;charset=utf-8;"
-    if request_type_not_ok?(request_type)
-      error_to_xml("X-Recognizer-Request-Type must be present and set to '#{Recognizer::REQUEST_NOT_COMPLETED}' or '#{ Recognizer::REQUEST_FINAL}'")
+    set_headers
+    session = SessionPool.find_open_by_id(params[:id])
+    if session
+      RecognizerPool.recognize_for_session(session, request.body)
+      session.to_xml
     else
-      session = SessionPool.find_open_by_id(params[:id])
-      if session
-	session.close! if request_type == Recognizer::REQUEST_FINAL
-	RecognizerPool.recognize_for_session(session, request.body, request_type)
-	session.to_xml
-      else
-	error_to_xml "Session with id #{params[:id]} not found"
-      end
+      error_to_xml "Session with id #{params[:id]} not found"
+    end
+  rescue Exception => e
+    error_to_xml(e.message)
+  end
+end
+
+put '/recognizer/:id/end' do
+  begin
+    set_headers
+    session = SessionPool.find_open_by_id(params[:id])
+    if session
+      session.close!
+      RecognizerPool.recognize_for_session(session, nil, true)
+      session.to_xml
+    else
+      error_to_xml("Session with id #{params[:id]} not found")
     end
   rescue Exception => e
     error_to_xml(e.message)
@@ -51,7 +61,7 @@ end
 
 get '/recognizer/:id' do
   begin
-    headers "Content-Type"=>"text/xml;charset=utf-8;"
+    set_headers
     session = SessionPool.find_by_id(params[:id])
     if session
       session.to_xml
@@ -73,8 +83,8 @@ helpers do
     end
   end
   
-  def request_type_not_ok?(request_type)
-    request_type.nil? || !(Recognizer.allowed_put_request_types.include?(request_type))
+  def set_headers
+    headers "Content-Type"=>"text/xml;charset=utf-8;"
   end
 end
 

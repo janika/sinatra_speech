@@ -1,7 +1,5 @@
 class Recognizer
   BUFFER_SIZE =  2*16000
-  REQUEST_FINAL = "data_end"
-  REQUEST_NOT_COMPLETED = "data"
   attr :result
   attr :queue
   attr :pipeline
@@ -63,10 +61,6 @@ class Recognizer
     return result
   end
   
-  def self.allowed_put_request_types
-    [REQUEST_NOT_COMPLETED, REQUEST_FINAL]
-  end
-  
   def end_feed(session)
     feed_end
     wait_final_result
@@ -74,14 +68,10 @@ class Recognizer
     session.final_result_created_at = Time.now
   end
       
-  def work_with_data(data, session, request_type)   
+  def work_with_data(data, session)   
     while buff = data.read(BUFFER_SIZE)
       feed_data(buff)
       session.result =  self.result
-    end
-    
-    if request_type == REQUEST_FINAL
-      end_feed(session)
     end
   end
 end

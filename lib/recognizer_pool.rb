@@ -25,12 +25,14 @@ module RecognizerPool
     end
   end
   
-  def self.recognize_for_session(session, data, request_type)
+  def self.recognize_for_session(session, data, end_session = false)
     recognizer = RecognizerPool.get_for_session(session.id)
     if recognizer.nil?
       raise "Recognizer for session #{session.id} not found."
+    elsif end_session
+      recognizer.end_feed(session)
     else
-      recognizer.work_with_data(data, session, request_type)
+      recognizer.work_with_data(data, session)
     end
   end
   
