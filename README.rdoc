@@ -12,7 +12,7 @@ To start the server go to the project root and type in terminal:
 === Send data
  curl -X PUT --data-binary @/home/user/test/data/speech.raw http://localhost:4567/recognizer/ <session_id> 
 
-=== End PUT feed to get the final result
+=== End feed to get the final result
  curl -X PUT http://localhost:4567/recognizer/ <session_id> /end
 
 === Get result and session data 
