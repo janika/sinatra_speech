@@ -45,6 +45,7 @@ describe "Recognizer API" do
     end
   end
   
+  
   describe "GET recognizer" do
     it "should be success" do
       session = RecognizerSession.new
@@ -72,10 +73,8 @@ describe "Recognizer API" do
       get "/recognizer/asd123"
       last_response.should be_ok
       last_response.body.should == "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<error>\n  <message>Session with id asd123 not found</message>\n</error>\n"
-    end
-    
+    end  
   end
-  
   
   describe "PUT recognizer" do 
     it "should be success" do
