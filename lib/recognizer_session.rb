@@ -1,3 +1,4 @@
+require 'digest/sha1'
 class RecognizerSession
   TIMESTAMP_FORMAT = "%F %H:%M:%S"
   attr_accessor :closed_at

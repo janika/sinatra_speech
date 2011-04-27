@@ -1,4 +1,5 @@
-%w(gst rubygems builder sinatra lib/recognizer lib/recognizer_pool lib/session_pool lib/recognizer_session).each{|lib| require lib}
+$:.unshift(File.join(File.dirname(__FILE__), "lib"))
+%w(gst rubygems builder sinatra recognizer recognizer_pool session_pool recognizer_session).each{|lib| require lib}
 Gst.init
 
 configure do
@@ -18,6 +19,7 @@ end
 
 post '/recognizer' do
   begin
+    headers "Content-Type"=>"text/xml;charset=utf-8;"
     new_session = RecognizerSession.new
     new_session.pool!
     new_session.to_xml
