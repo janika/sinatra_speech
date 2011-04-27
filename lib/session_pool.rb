@@ -25,9 +25,9 @@ module SessionPool
     pool.values.each do |session|
       if (Time.now - session.created_at) >  LIFE_CYCLE_IN_SECONDS
         pool.delete(session.id)
-      elsif (Time.now - session.created_at) >  MAX_OPEN_TIME_IN_SECONDS
+      elsif !session.closed? && (Time.now - session.created_at) >  MAX_OPEN_TIME_IN_SECONDS
         session.closed_at = Time.now 
-        session.system_message = "Session time limit exceeded."
+        session.system_message = "Session time limit exceeded"
       end
     end
   end

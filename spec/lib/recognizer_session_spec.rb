@@ -43,4 +43,52 @@ describe RecognizerSession do
       RecognizerPool.get_for_session(session.id).should_not be_nil
     end
   end
+  
+  describe "closed_at_to_s" do
+    it "should return closed_at in correct format" do
+      session = RecognizerSession.new
+      time = Time.now
+      session.closed_at = time
+      session.closed_at_to_s.should == time.strftime(RecognizerSession::TIMESTAMP_FORMAT)
+    end
+    
+    it "should return nil" do
+      RecognizerSession.new.closed_at_to_s.should be_nil
+    end
+  end
+
+  describe "final_result_created_at_to_s" do
+    it "should return closed_at in correct format" do
+      session = RecognizerSession.new
+      time = Time.now
+      session.final_result_created_at = time
+      session.final_result_created_at_to_s.should == time.strftime(RecognizerSession::TIMESTAMP_FORMAT)
+    end
+    
+    it "should return nil" do
+      RecognizerSession.new.final_result_created_at_to_s.should be_nil
+    end
+  end
+  
+  describe "created_at_to_s" do
+    it "should return closed_at in correct format" do
+      time = Time.now
+      Time.stub!(:now).and_return(time)
+      session = RecognizerSession.new
+      session.created_at_to_s.should == time.strftime(RecognizerSession::TIMESTAMP_FORMAT)
+    end
+  end
+  
+  describe "to_xml" do
+    it "should include session properties" do
+      time = Time.now
+      Time.stub!(:now).and_return(time)
+      session = RecognizerSession.new
+      session.result = "Result"
+      session.closed_at = time
+      session.final_result_created_at = time
+      session.system_message = "Message"
+      session.to_xml.should == "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<recognizer_session>\n  <closed_at>#{time.strftime(RecognizerSession::TIMESTAMP_FORMAT)}</closed_at>\n  <final_result_created_at>#{time.strftime(RecognizerSession::TIMESTAMP_FORMAT)}</final_result_created_at>\n  <created_at>#{time.strftime(RecognizerSession::TIMESTAMP_FORMAT)}</created_at>\n  <result>Result</result>\n  <id>#{session.id}</id>\n  <system_message>Message</system_message>\n</recognizer_session>\n" 
+    end
+  end
 end
