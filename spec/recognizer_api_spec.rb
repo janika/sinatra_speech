@@ -102,7 +102,7 @@ describe "Recognizer API" do
       session = RecognizerSession.new
       SessionPool.should_receive(:find_open_by_id).with("asd123").and_return(session)
       RecognizerPool.should_receive(:recognize_for_session).and_return(true)
-      put "/recognizer/asd123?thisibody", {}, "HTTP_X_RECOGNIZER_REQUEST_TYPE" => "data"
+      put "/recognizer/asd123", {}, "HTTP_X_RECOGNIZER_REQUEST_TYPE" => "data"
     end
     
     it "should return session xml" do
@@ -115,14 +115,14 @@ describe "Recognizer API" do
       session.should_receive(:system_message).and_return("Recognizer closed")
       SessionPool.should_receive(:find_open_by_id).with("asd123").and_return(session)
       RecognizerPool.should_receive(:recognize_for_session).and_return(true)
-      put "/recognizer/asd123?thisibody", {}, "HTTP_X_RECOGNIZER_REQUEST_TYPE" => "data"
+      put "/recognizer/asd123", {}, "HTTP_X_RECOGNIZER_REQUEST_TYPE" => "data"
       last_response.body.should == "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<recognizer_session>\n  <closed_at>Closed at</closed_at>\n  <final_result_created_at>Final time</final_result_created_at>\n  <created_at>created_at</created_at>\n  <result>Hello World!</result>\n  <id>id</id>\n  <system_message>Recognizer closed</system_message>\n</recognizer_session>\n"
     end
     
     it "should close session if header type is data_end" do
       session = RecognizerSession.new
       SessionPool.should_receive(:find_open_by_id).with("asd123").and_return(session)
-      put "/recognizer/asd123?thisibody", {}, "HTTP_X_RECOGNIZER_REQUEST_TYPE" => "data_end"
+      put "/recognizer/asd123", {}, "HTTP_X_RECOGNIZER_REQUEST_TYPE" => "data_end"
       session.closed_at.should_not be_nil
     end
   end
