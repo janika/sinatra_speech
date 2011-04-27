@@ -6,7 +6,7 @@ class Recognizer
   attr :appsrc
   attr :asr
   
-  def initialize()
+  def initialize
     @result = ""
     # construct pipeline
     @pipeline = Gst::Parse.launch("appsrc name=appsrc ! audioconvert ! audioresample ! pocketsphinx name=asr ! fakesink")
@@ -34,8 +34,8 @@ class Recognizer
   end
     
   # Call this before starting a new recognition
-  def clear()
-    result = ""
+  def clear
+    @result = ""
     queue.clear
     pipeline.pause
   end
@@ -49,13 +49,13 @@ class Recognizer
   end
   
   # Notify recognizer of utterance end
-  def feed_end()
-    appsrc.end_of_stream()
+  def feed_end
+    appsrc.end_of_stream
   end
   
   # Wait for the recognizer to recognize the current utterance
   # Returns the final recognition result
-  def wait_final_result()
+  def wait_final_result
     queue.pop
     pipeline.stop
     return result
