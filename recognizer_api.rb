@@ -31,6 +31,7 @@ end
 put '/recognizer/:id' do
   begin
     request_type = env['HTTP_X_RECOGNIZER_REQUEST_TYPE']
+    headers "Content-Type"=>"text/xml;charset=utf-8;"
     if request_type_not_ok?(request_type)
       error_to_xml("X-Recognizer-Request-Type must be present and set to '#{Recognizer::REQUEST_NOT_COMPLETED}' or '#{ Recognizer::REQUEST_FINAL}'")
     else
@@ -50,6 +51,7 @@ end
 
 get '/recognizer/:id' do
   begin
+    headers "Content-Type"=>"text/xml;charset=utf-8;"
     session = SessionPool.find_by_id(params[:id])
     if session
       session.to_xml
