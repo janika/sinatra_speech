@@ -8,12 +8,9 @@ module RecognizerPool
   end
   
   def self.get_for_session(session_id)
-    recognizer = pool.fetch(session_id)
-    if !recognizer.nil?
-      return recognizer
-    else
-      raise "Recognizer not found"   
-    end
+    pool.fetch(session_id)
+  rescue IndexError
+      raise "Recognizer for session #{session_id} not present"   
   end
   
   def self.add_new_to_active_pool(session)
