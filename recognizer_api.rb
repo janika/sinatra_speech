@@ -1,5 +1,5 @@
 $:.unshift(File.join(File.dirname(__FILE__), "lib"))
-%w(gst rubygems builder sinatra recognizer recognizer_pool session_pool recognizer_session).each{|lib| require lib}
+%w(gst rubygems builder sinatra recognizer recognizer_pool session_pool recognizer_session rufus/scheduler).each{|lib| require lib}
 Gst.init
 
 configure do
@@ -14,7 +14,12 @@ configure do
   RecognizerPool::NUMBER_OF_INITIAL_RECOGNIZERS.times do 
     RecognizerPool.pool[:idle] << Recognizer.new
   end
- 
+  
+  scheduler = Rufus::Scheduler.start_new
+  scheduler.every '30s' do
+    SessionPool.clean_pool
+    RecognizerPool.collect_idle
+  end
 end
 
 post '/recognizer' do
