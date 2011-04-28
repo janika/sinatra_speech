@@ -1,5 +1,5 @@
 $:.unshift(File.join(File.dirname(__FILE__), "lib"))
-%w(gst rubygems builder sinatra recognizer recognizer_pool recognizer_session rufus/scheduler json).each{|lib| require lib}
+%w(gst rubygems builder sinatra timeout recognizer recognizer_pool recognizer_session rufus/scheduler json).each{|lib| require lib}
 Gst.init
 
 configure do

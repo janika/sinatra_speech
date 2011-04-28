@@ -2,6 +2,7 @@ require 'digest/sha1'
 class RecognizerSession
   TIMESTAMP_FORMAT = "%F %H:%M:%S"
   BUFFER_SIZE =  2*16000
+  TIMEOUT_IN_SECONDS = 10
   attr_accessor :closed_at
   attr_accessor :final_result_created_at
   attr_accessor :system_message
@@ -22,7 +23,9 @@ class RecognizerSession
   def close!
     self.closed_at = Time.now
     unless recognizer.nil?
-      end_feed
+      Timeout::timeout(TIMEOUT_IN_SECONDS) {
+	end_feed
+      }
       RecognizerPool.make_recognizer_idle_if_necessary(recognizer)
     end
     self.recognizer = nil
