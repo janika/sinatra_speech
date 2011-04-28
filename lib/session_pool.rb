@@ -1,5 +1,5 @@
 module SessionPool
-  LIFE_CYCLE_IN_SECONDS = 60
+  LIFE_CYCLE_IN_SECONDS = 3 * 60
   MAX_OPEN_TIME_IN_SECONDS = 30
   
   def self.pool

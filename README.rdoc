@@ -21,8 +21,12 @@ To start the server go to the project root and type in terminal:
 
 == Response
 
-* Response is in xml.
+* Response is by default xml. If you want json response set your request Accept headers to "application/json"
+
+ curl -X POST  http://localhost:4567/recognizer  -H "Accept:application/json"
+
 * For all requests, the successful response containing session data looks like this:
+** in xml:
 
  <?xml version="1.0" encoding="UTF-8"?>
  <recognizer_session>
@@ -34,10 +38,18 @@ To start the server go to the project root and type in terminal:
    <system_message></system_message>
  </recognizer_session>
 
+** in json:
+
+ {"closed_at":null,"final_result_created_at":null,"system_message":null,"result":null,"id":"a1d80929c4","created_at":"2011-04-28 12:41:39"}
 
 * If an error occurs, the response looks like this:
+** in xml:
 
  <?xml version="1.0" encoding="UTF-8"?>
  <error>
    <message>X-Recognizer-Request-Type must be present and set to 'data' or 'data_end'</message>
  </error>
+
+**in json:
+
+ {"error":{"message":"Session with id b8e7524749 not found"}}

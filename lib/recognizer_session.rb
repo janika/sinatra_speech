@@ -57,4 +57,15 @@ class RecognizerSession
     end
     xml
   end
+  
+  def to_json
+    {
+      :id => self.id, 
+      :closed_at => self.closed_at_to_s,
+      :final_result_created_at => self.final_result_created_at_to_s,
+      :created_at => self.created_at_to_s,
+      :result => self.result,
+      :system_message => self.system_message
+    }.to_json
+  end
 end
