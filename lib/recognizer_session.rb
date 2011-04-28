@@ -2,7 +2,7 @@ require 'digest/sha1'
 class RecognizerSession
   TIMESTAMP_FORMAT = "%F %H:%M:%S"
   BUFFER_SIZE =  2*16000
-  TIMEOUT_IN_SECONDS = 10
+  TIMEOUT_IN_SECONDS = 5
   attr_accessor :closed_at
   attr_accessor :final_result_created_at
   attr_accessor :system_message
@@ -23,23 +23,27 @@ class RecognizerSession
   def close!
     self.closed_at = Time.now
     unless recognizer.nil?
-      Timeout::timeout(TIMEOUT_IN_SECONDS) {
-	end_feed
-      }
+      end_feed
       RecognizerPool.make_recognizer_idle_if_necessary(recognizer)
     end
     self.recognizer = nil
   end
   
   def end_feed
-    recognizer.end_feed
+    begin
+      timeout(TIMEOUT_IN_SECONDS) {
+	self.recognizer.end_feed
+      }
+    rescue Timeout::Error
+      self.system_message = "execution expired"
+    end
     self.result = self.recognizer.result
     self.final_result_created_at = Time.now
   end
   
   def work_with_data(data)   
     while buff = data.read(BUFFER_SIZE)
-      recognizer.feed_data(buff)
+      self.recognizer.feed_data(buff)
       self.result =  self.recognizer.result
     end
   end
@@ -49,7 +53,7 @@ class RecognizerSession
   end
   
   def recognize(data)
-    if recognizer.nil?
+    if self.recognizer.nil?
       raise "Recognizer for session #{id} not found"
     else
       work_with_data(data)
