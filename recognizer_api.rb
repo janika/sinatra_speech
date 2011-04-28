@@ -1,5 +1,5 @@
 $:.unshift(File.join(File.dirname(__FILE__), "lib"))
-%w(gst rubygems builder sinatra recognizer recognizer_pool session_pool recognizer_session rufus/scheduler json).each{|lib| require lib}
+%w(gst rubygems builder sinatra recognizer recognizer_pool recognizer_session rufus/scheduler json).each{|lib| require lib}
 Gst.init
 
 configure do
@@ -9,7 +9,6 @@ configure do
   set :show_exceptions, false
 
   $recognizer_pool = {:idle => []}
-  $session_pool = {}
 
   RecognizerPool::NUMBER_OF_INITIAL_RECOGNIZERS.times do 
     RecognizerPool.pool[:idle] << Recognizer.new
@@ -17,8 +16,7 @@ configure do
   
   scheduler = Rufus::Scheduler.start_new
   scheduler.every '30s' do
-    SessionPool.clean_pool
-    RecognizerPool.collect_idle
+    RecognizerPool.clean_pool
   end
 end
 
@@ -34,10 +32,14 @@ end
 
 put '/recognizer/:id' do
   begin
-    session = SessionPool.find_open_by_id(params[:id])
+    session = RecognizerPool.find_by_session_id(params[:id])
     if session
-      RecognizerPool.recognize_for_session(session, request.body)
-      render_with_type(session)
+      if session.closed?
+	render_error("Session with id #{params[:id]} is already closed")
+      else
+	session.recognize(request.body)
+	render_with_type(session)
+      end
     else
       render_error("Session with id #{params[:id]} not found")
     end
@@ -48,11 +50,14 @@ end
 
 put '/recognizer/:id/end' do
   begin
-    session = SessionPool.find_open_by_id(params[:id])
+    session = RecognizerPool.find_by_session_id(params[:id])
     if session
-      session.close!
-      RecognizerPool.recognize_for_session(session, nil, true)
-      render_with_type(session)
+      if session.closed?
+	render_error("Session with id #{params[:id]} is already closed")
+      else
+	session.close!
+	render_with_type(session)
+      end
     else
       render_error("Session with id #{params[:id]} not found")
     end
@@ -63,7 +68,7 @@ end
 
 get '/recognizer/:id' do
   begin
-    session = SessionPool.find_by_id(params[:id])
+    session = RecognizerPool.find_by_session_id(params[:id])
     if session
       render_with_type(session)
     else

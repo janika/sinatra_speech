@@ -1,5 +1,4 @@
 class Recognizer
-  BUFFER_SIZE =  2*16000
   attr :result
   attr :queue
   attr :pipeline
@@ -61,17 +60,8 @@ class Recognizer
     return result
   end
   
-  def end_feed(session)
+  def end_feed
     feed_end
     wait_final_result
-    session.result = self.result
-    session.final_result_created_at = Time.now
-  end
-      
-  def work_with_data(data, session)   
-    while buff = data.read(BUFFER_SIZE)
-      feed_data(buff)
-      session.result =  self.result
-    end
   end
 end

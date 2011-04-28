@@ -1,10 +1,12 @@
 require 'digest/sha1'
 class RecognizerSession
   TIMESTAMP_FORMAT = "%F %H:%M:%S"
+  BUFFER_SIZE =  2*16000
   attr_accessor :closed_at
   attr_accessor :final_result_created_at
   attr_accessor :system_message
   attr_accessor :result
+  attr_accessor :recognizer
   attr :id
   attr :created_at
   
@@ -19,11 +21,36 @@ class RecognizerSession
   
   def close!
     self.closed_at = Time.now
+    unless recognizer.nil?
+      end_feed
+      RecognizerPool.make_recognizer_idle_if_necessary(recognizer)
+    end
+    self.recognizer = nil
+  end
+  
+  def end_feed
+    recognizer.end_feed
+    self.result = self.recognizer.result
+    self.final_result_created_at = Time.now
+  end
+  
+  def work_with_data(data)   
+    while buff = data.read(BUFFER_SIZE)
+      recognizer.feed_data(buff)
+      self.result =  self.recognizer.result
+    end
   end
   
   def pool!
     RecognizerPool.add_new_to_active_pool(self)
-    SessionPool.add_to_pool(self)
+  end
+  
+  def recognize(data)
+    if recognizer.nil?
+      raise "Recognizer for session #{id} not found"
+    else
+      work_with_data(data)
+    end
   end
   
   def closed_at_to_s

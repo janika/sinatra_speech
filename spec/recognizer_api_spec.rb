@@ -37,13 +37,13 @@ describe "Recognizer API" do
       session.stub!(:id).and_return('id')
       session.should_receive(:created_at_to_s).and_return("created_at")
       post '/recognizer', {}, "HTTP_ACCEPT" => "application/json"
-      last_response.body.should == "{\"created_at\":\"created_at\",\"system_message\":null,\"result\":null,\"final_result_created_at\":null,\"id\":\"id\",\"closed_at\":null}"
+      last_response.body.should ==  "{\"system_message\":null,\"created_at\":\"created_at\",\"result\":null,\"closed_at\":null,\"final_result_created_at\":null,\"id\":\"id\"}"
     end
     
     it "should add to session pool" do
-      last_size = SessionPool.pool.size
+      last_size = RecognizerPool.pool.size
       post '/recognizer'
-      SessionPool.pool.size.should == last_size + 1
+      RecognizerPool.pool.size.should == last_size + 1
     end
     
     it "should respond with error xml if pool limit exceeded" do
@@ -64,7 +64,7 @@ describe "Recognizer API" do
       session = RecognizerSession.new
       session.stub!(:id).and_return('id')
       session.should_receive(:created_at_to_s).and_return("created_at")
-      SessionPool.should_receive(:find_by_id).with("asd123").and_return(session)
+      RecognizerPool.should_receive(:find_by_session_id).with("asd123").and_return(session)
       get "/recognizer/asd123"
       last_response.should be_ok
     end
@@ -77,7 +77,7 @@ describe "Recognizer API" do
       session.should_receive(:final_result_created_at_to_s).and_return("Final time")
       session.should_receive(:closed_at_to_s).and_return("Closed at")
       session.should_receive(:system_message).and_return("Recognizer closed")
-      SessionPool.should_receive(:find_by_id).with("asd123").and_return(session)
+      RecognizerPool.should_receive(:find_by_session_id).with("asd123").and_return(session)
       get "/recognizer/asd123"
       last_response.body.should == "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<recognizer_session>\n  <closed_at>Closed at</closed_at>\n  <final_result_created_at>Final time</final_result_created_at>\n  <created_at>created_at</created_at>\n  <result>Hello World!</result>\n  <id>id</id>\n  <system_message>Recognizer closed</system_message>\n</recognizer_session>\n"
     end
@@ -90,9 +90,9 @@ describe "Recognizer API" do
       session.should_receive(:final_result_created_at_to_s).and_return("Final time")
       session.should_receive(:closed_at_to_s).and_return("Closed at")
       session.should_receive(:system_message).and_return("Recognizer closed")
-      SessionPool.should_receive(:find_by_id).with("asd123").and_return(session)
+      RecognizerPool.should_receive(:find_by_session_id).with("asd123").and_return(session)
       get "/recognizer/asd123", {}, "HTTP_ACCEPT" => "application/json"
-      last_response.body.should == "{\"created_at\":\"created_at\",\"system_message\":\"Recognizer closed\",\"result\":\"Hello World!\",\"final_result_created_at\":\"Final time\",\"id\":\"id\",\"closed_at\":\"Closed at\"}"
+      last_response.body.should =="{\"system_message\":\"Recognizer closed\",\"created_at\":\"created_at\",\"result\":\"Hello World!\",\"closed_at\":\"Closed at\",\"final_result_created_at\":\"Final time\",\"id\":\"id\"}"
     end
     
     it "should return error xml if session not found" do
@@ -113,6 +113,15 @@ describe "Recognizer API" do
       put "/recognizer/asd123"
       last_response.should be_ok
     end
+    
+    it "should render error if session already closed" do
+      session = RecognizerSession.new
+      session.closed_at = Time.now
+      RecognizerPool.should_receive(:find_by_session_id).with("asd123").and_return(session)
+      put "/recognizer/asd123"
+      last_response.body.should == "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<error>\n  <message>Session with id asd123 is already closed</message>\n</error>\n"
+    end
+    
 
     it "should return session xml" do
       session = RecognizerSession.new
@@ -122,8 +131,8 @@ describe "Recognizer API" do
       session.should_receive(:final_result_created_at_to_s).and_return("Final time")
       session.should_receive(:closed_at_to_s).and_return("Closed at")
       session.should_receive(:system_message).and_return("Recognizer closed")
-      SessionPool.should_receive(:find_open_by_id).with("asd123").and_return(session)
-      RecognizerPool.should_receive(:recognize_for_session).and_return(true)
+      RecognizerPool.should_receive(:find_by_session_id).with("asd123").and_return(session)
+      session.should_receive(:recognize).and_return(true)
       put "/recognizer/asd123"
       last_response.body.should == "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<recognizer_session>\n  <closed_at>Closed at</closed_at>\n  <final_result_created_at>Final time</final_result_created_at>\n  <created_at>created_at</created_at>\n  <result>Hello World!</result>\n  <id>id</id>\n  <system_message>Recognizer closed</system_message>\n</recognizer_session>\n"
     end
@@ -136,19 +145,27 @@ describe "Recognizer API" do
       session.should_receive(:final_result_created_at_to_s).and_return("Final time")
       session.should_receive(:closed_at_to_s).and_return("Closed at")
       session.should_receive(:system_message).and_return("Recognizer closed")
-      SessionPool.should_receive(:find_open_by_id).with("asd123").and_return(session)
-      RecognizerPool.should_receive(:recognize_for_session).and_return(true)
+      RecognizerPool.should_receive(:find_by_session_id).with("asd123").and_return(session)
+      session.should_receive(:recognize).and_return(true)
       put "/recognizer/asd123", {}, "HTTP_ACCEPT" => "application/json"
-      last_response.body.should == "{\"created_at\":\"created_at\",\"system_message\":\"Recognizer closed\",\"result\":\"Hello World!\",\"final_result_created_at\":\"Final time\",\"id\":\"id\",\"closed_at\":\"Closed at\"}" 
+      last_response.body.should == "{\"system_message\":\"Recognizer closed\",\"created_at\":\"created_at\",\"result\":\"Hello World!\",\"closed_at\":\"Closed at\",\"final_result_created_at\":\"Final time\",\"id\":\"id\"}"
     end
   end
   
   describe "PUT recognizer/id/end" do
     it "should close session" do
       session = RecognizerSession.new
-      SessionPool.should_receive(:find_open_by_id).with("asd123").and_return(session)
+      RecognizerPool.should_receive(:find_by_session_id).with("asd123").and_return(session)
       put "/recognizer/asd123/end"
       session.closed_at.should_not be_nil
+    end
+    
+    it "should render error if session already closed" do
+      session = RecognizerSession.new
+      session.closed_at = Time.now
+      RecognizerPool.should_receive(:find_by_session_id).with("asd123").and_return(session)
+      put "/recognizer/asd123/end"
+      last_response.body.should == "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<error>\n  <message>Session with id asd123 is already closed</message>\n</error>\n"
     end
     
     it "should return session xml" do
@@ -159,8 +176,8 @@ describe "Recognizer API" do
       session.should_receive(:final_result_created_at_to_s).and_return("Final time")
       session.should_receive(:closed_at_to_s).and_return("Closed at")
       session.should_receive(:system_message).and_return("Recognizer closed")
-      SessionPool.should_receive(:find_open_by_id).with("asd123").and_return(session)
-      RecognizerPool.should_receive(:recognize_for_session).with(session, nil, true).and_return(true)
+      RecognizerPool.should_receive(:find_by_session_id).with("asd123").and_return(session)
+      session.should_receive(:close!).and_return(true)
       put "/recognizer/asd123/end"
       last_response.body.should == "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<recognizer_session>\n  <closed_at>Closed at</closed_at>\n  <final_result_created_at>Final time</final_result_created_at>\n  <created_at>created_at</created_at>\n  <result>Hello World!</result>\n  <id>id</id>\n  <system_message>Recognizer closed</system_message>\n</recognizer_session>\n"
     end
@@ -173,10 +190,10 @@ describe "Recognizer API" do
       session.should_receive(:final_result_created_at_to_s).and_return("Final time")
       session.should_receive(:closed_at_to_s).and_return("Closed at")
       session.should_receive(:system_message).and_return("Recognizer closed")
-      SessionPool.should_receive(:find_open_by_id).with("asd123").and_return(session)
-      RecognizerPool.should_receive(:recognize_for_session).with(session, nil, true).and_return(true)
+      RecognizerPool.should_receive(:find_by_session_id).with("asd123").and_return(session)
+      session.should_receive(:close!).and_return(true)
       put "/recognizer/asd123/end", {}, "HTTP_ACCEPT" => "application/json"
-      last_response.body.should ==  "{\"created_at\":\"created_at\",\"system_message\":\"Recognizer closed\",\"result\":\"Hello World!\",\"final_result_created_at\":\"Final time\",\"id\":\"id\",\"closed_at\":\"Closed at\"}"
+      last_response.body.should ==  "{\"system_message\":\"Recognizer closed\",\"created_at\":\"created_at\",\"result\":\"Hello World!\",\"closed_at\":\"Closed at\",\"final_result_created_at\":\"Final time\",\"id\":\"id\"}"
     end
   end
 end

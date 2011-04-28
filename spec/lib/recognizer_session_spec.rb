@@ -29,18 +29,30 @@ describe RecognizerSession do
       session.close!
       session.closed_at.should_not be_nil
     end
+    
+    it "should end recognizer feed and remove recognizer from session" do
+      session = RecognizerSession.new
+      recognizer = Recognizer.new
+      session.recognizer = recognizer
+      session.final_result_created_at.should be_nil
+      
+      recognizer.should_receive(:end_feed)
+      recognizer.should_receive(:result).and_return("Result text")
+      session.close!
+      
+      session.recognizer.should be_nil
+      session.final_result_created_at.should_not be_nil
+      session.result.should == "Result text"
+    end
   end
   
   describe "pool!" do
     it "should add to session and recogniser pool" do
       original_recognizer_pool_size = RecognizerPool.pool.size
-      session_pool_size = SessionPool.pool.size
       session = RecognizerSession.new
       session.pool!
       RecognizerPool.pool.size.should == original_recognizer_pool_size + 1
-      SessionPool.pool.size.should == session_pool_size + 1
-      SessionPool.find_open_by_id(session.id).should == session
-      RecognizerPool.get_for_session(session.id).should_not be_nil
+      RecognizerPool.find_by_session_id(session.id).should == session
     end
   end
   
@@ -89,6 +101,29 @@ describe RecognizerSession do
       session.final_result_created_at = time
       session.system_message = "Message"
       session.to_xml.should == "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<recognizer_session>\n  <closed_at>#{time.strftime(RecognizerSession::TIMESTAMP_FORMAT)}</closed_at>\n  <final_result_created_at>#{time.strftime(RecognizerSession::TIMESTAMP_FORMAT)}</final_result_created_at>\n  <created_at>#{time.strftime(RecognizerSession::TIMESTAMP_FORMAT)}</created_at>\n  <result>Result</result>\n  <id>#{session.id}</id>\n  <system_message>Message</system_message>\n</recognizer_session>\n" 
+    end
+  end
+  
+  describe "recognize" do
+    it "should return error if recognizer not present" do
+      session = RecognizerSession.new
+      lambda{session.recognize("data")}.should raise_error("Recognizer for session #{session.id} not found")
+    end
+    
+    it " should recognizer speech from file and clear afterwards" do
+      session = RecognizerSession.new
+      recognizer = Recognizer.new
+      session.recognizer = recognizer
+      file = File.dirname(__FILE__) + '/../test_data/goforward.raw'
+      session.work_with_data( File.open(file,"rb"))
+      recognizer.result.should == session.result
+      session.end_feed
+      (recognizer.result.size > 1).should be_true
+      recognizer.result.should == "go forward ten leaders"
+      recognizer.result.should == session.result
+      session.final_result_created_at.should_not be_nil
+      recognizer.clear
+      recognizer.result.should == ""
     end
   end
 end

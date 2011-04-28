@@ -22,19 +22,4 @@ describe Recognizer do
       recognizer = Recognizer.new
     end
   end
-  
-  it " should recognizer speech from file and clear afterwards" do
-    recognizer = Recognizer.new
-    session = RecognizerSession.new
-    file = File.dirname(__FILE__) + '/../test_data/goforward.raw'
-    recognizer.work_with_data( File.open(file,"rb"), session)
-    recognizer.result.should == session.result
-    recognizer.end_feed(session)
-    (recognizer.result.size > 1).should be_true
-    recognizer.result.should == "go forward ten leaders"
-    recognizer.result.should == session.result
-    session.final_result_created_at.should_not be_nil
-    recognizer.clear
-    recognizer.result.should == ""
-  end
 end
