@@ -1,0 +1,29 @@
+GEM
+  remote: http://rubygems.org/
+  specs:
+    builder (3.0.0)
+    daemons (1.1.0)
+    eventmachine (0.12.10)
+    json (1.5.1)
+    rack (1.2.2)
+    rufus-scheduler (2.0.9)
+      tzinfo (>= 0.3.23)
+    sinatra (1.2.3)
+      rack (~> 1.1)
+      tilt (>= 1.2.2, < 2.0)
+    thin (1.2.11)
+      daemons (>= 1.0.9)
+      eventmachine (>= 0.12.6)
+      rack (>= 1.0.0)
+    tilt (1.2.2)
+    tzinfo (0.3.25)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  builder
+  json
+  rufus-scheduler
+  sinatra
+  thin
