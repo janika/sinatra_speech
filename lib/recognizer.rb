@@ -48,7 +48,7 @@ class Recognizer
   end
   
   # Notify recognizer of utterance end
-  def feed_end
+  def close_stream
     appsrc.end_of_stream
   end
   
@@ -61,7 +61,7 @@ class Recognizer
   end
   
   def end_feed
-    feed_end
+    close_stream
     wait_final_result
   end
 end
