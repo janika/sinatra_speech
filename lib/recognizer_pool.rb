@@ -18,6 +18,7 @@ module RecognizerPool
   def self.add_new_to_active_pool(session)
     recognizer = get_recognizer
     if !recognizer.nil?
+      recognizer.clear
       session.recognizer = recognizer
       pool[session.id] = session
     else
