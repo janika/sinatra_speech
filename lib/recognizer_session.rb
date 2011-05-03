@@ -3,6 +3,8 @@ class RecognizerSession
   TIMESTAMP_FORMAT = "%F %H:%M:%S"
   BUFFER_SIZE =  2*16000
   TIMEOUT_IN_SECONDS = 5
+  TIMEOUT_FOR_RECOGNITION_FAILURE = 20
+  
   attr_accessor :closed_at
   attr_accessor :final_result_created_at
   attr_accessor :system_message
@@ -20,13 +22,17 @@ class RecognizerSession
     !closed_at.nil?
   end
   
-  def close!
+  def close!(end_recognizer_feed = true)
     self.closed_at = Time.now
-    unless recognizer.nil?
-      end_feed
+    if recognizer
+      end_feed if end_recognizer_feed
       RecognizerPool.make_recognizer_idle_if_necessary(recognizer)
     end
     self.recognizer = nil
+  end
+  
+  def recognition_failing?
+    !closed? && ((Time.now - self.created_at) > TIMEOUT_FOR_RECOGNITION_FAILURE) && (self.result.nil? || self.result.size == 0)
   end
   
   def end_feed

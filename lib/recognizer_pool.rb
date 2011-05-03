@@ -46,7 +46,7 @@ module RecognizerPool
     pool[:idle] << recognizer if (pool[:idle].size < MAX_IDLE_RECOGNIZERS)
   end
   
-  def self.clean_pool
+  def self.organize_pool
     pool.each_pair do |key, session|
       if key != :idle
 	if (Time.now - session.created_at) >  LIFE_CYCLE_IN_SECONDS
@@ -54,8 +54,18 @@ module RecognizerPool
 	elsif !session.closed? && (Time.now - session.created_at) >  MAX_OPEN_TIME_IN_SECONDS
 	  session.close!
 	  session.system_message = "Session time limit exceeded"
+	elsif session.recognition_failing?
+	  session.close!(false)
+	  session.system_message = "Recognition not possible"
 	end
       end
+    end
+    add_new_recognizer_to_idle_pool_if_necessary    
+  end
+  
+  def self.add_new_recognizer_to_idle_pool_if_necessary
+    if pool[:idle].empty? && ((active_recognizers.size) < MAX_RECOGNIZERS)
+      pool[:idle] << Recognizer.new
     end
   end
 end

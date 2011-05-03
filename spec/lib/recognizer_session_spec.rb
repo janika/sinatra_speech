@@ -44,6 +44,47 @@ describe RecognizerSession do
       session.final_result_created_at.should_not be_nil
       session.result.should == "Result text"
     end
+    
+    it "should not end recognizer feed" do
+      session = RecognizerSession.new
+      recognizer = Recognizer.new
+      session.recognizer = recognizer
+      session.final_result_created_at.should be_nil
+      
+      recognizer.should_not_receive(:end_feed)
+      recognizer.should_not_receive(:result)
+      session.close!(false)
+      
+      session.recognizer.should be_nil
+      session.final_result_created_at.should be_nil
+      session.result.should be_nil
+    end
+  end
+  
+  describe "recognition_failing?" do
+    it "should be true" do
+      session = RecognizerSession.new
+      time = (Time.now - (RecognizerSession::TIMEOUT_FOR_RECOGNITION_FAILURE + 10))
+      session.stub!(:created_at).and_return(time)
+      session.recognition_failing?.should be_true
+    end
+    
+    it "should be false, if session closed" do
+      session = RecognizerSession.new
+      session.closed_at == Time.now
+      session.recognition_failing?.should be_false
+    end
+    it "should be false if timeout not occurred yet" do
+      session = RecognizerSession.new
+      session.recognition_failing?.should be_false
+    end
+    it "should be false if result is not empty" do
+      session = RecognizerSession.new
+      time = (Time.now - (RecognizerSession::TIMEOUT_FOR_RECOGNITION_FAILURE + 10))
+      session.stub!(:created_at).and_return(time)
+      session.result = "tere"
+      session.recognition_failing?.should be_false
+    end
   end
   
   describe "pool!" do

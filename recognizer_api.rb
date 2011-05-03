@@ -17,7 +17,7 @@ configure do
   
   scheduler = Rufus::Scheduler.start_new
   scheduler.every '30s' do
-    RecognizerPool.clean_pool
+    RecognizerPool.organize_pool
   end
 end
 

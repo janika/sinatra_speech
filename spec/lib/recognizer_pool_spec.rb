@@ -55,7 +55,7 @@ describe RecognizerPool do
     end
   end
     
-  describe "clean_pool" do
+  describe "organize_pool" do
     before(:each) do 
       RecognizerPool::MAX_RECOGNIZERS = 1
       $recognizer_pool = {:idle => []}
@@ -70,12 +70,27 @@ describe RecognizerPool do
       RecognizerPool.find_by_session_id(session.id).should == session
       
       session.should_receive(:end_feed).and_return(true)
-      RecognizerPool.clean_pool
+      RecognizerPool.organize_pool
       
       RecognizerPool.find_by_session_id(session.id).should == session
       session.recognizer.should be_nil
       session.closed_at.should_not be_nil
       session.system_message.should == "Session time limit exceeded"
+    end
+    
+    it "should close session without ending feed if recognition failing" do
+      session = RecognizerSession.new
+      RecognizerPool.add_new_to_active_pool(session)
+      session.recognizer.should_not be_nil
+      RecognizerPool.find_by_session_id(session.id).should == session
+      session.should_receive(:recognition_failing?).and_return(true)
+      session.should_not_receive(:end_feed)
+      RecognizerPool.organize_pool
+      
+      RecognizerPool.find_by_session_id(session.id).should == session
+      session.recognizer.should be_nil
+      session.closed_at.should_not be_nil
+      session.system_message.should == "Recognition not possible"
     end
     
     it "should remove session if maximum life time exceeded" do
@@ -84,7 +99,7 @@ describe RecognizerPool do
       session.stub!(:created_at).and_return(time)
       RecognizerPool.add_new_to_active_pool(session)
       RecognizerPool.find_by_session_id(session.id).should == session
-      RecognizerPool.clean_pool
+      RecognizerPool.organize_pool
       RecognizerPool.find_by_session_id(session.id).should be_nil
     end
     
@@ -92,8 +107,43 @@ describe RecognizerPool do
       session = RecognizerSession.new
       RecognizerPool.add_new_to_active_pool(session)
       RecognizerPool.find_by_session_id(session.id).should == session
-      RecognizerPool.clean_pool
+      RecognizerPool.organize_pool
       RecognizerPool.find_by_session_id(session.id).should == session
+    end
+    
+    it "should receive add_new_recognizer_to_idle_pool_if_necessary" do
+      session = RecognizerSession.new
+      RecognizerPool.should_receive(:add_new_recognizer_to_idle_pool_if_necessary)
+      RecognizerPool.organize_pool
+    end
+  end
+  
+  describe "add_new_recognizer_to_idle_pool_if_necessary" do
+    it "should add new recognizer to idle pool if idle pool is empty and max is not exceeded" do
+      RecognizerPool::MAX_RECOGNIZERS = 1
+      $recognizer_pool = {:idle => []}
+      RecognizerPool.pool[:idle].size.should == 0
+      Recognizer.should_receive(:new).and_return(mock)
+      RecognizerPool.add_new_recognizer_to_idle_pool_if_necessary
+      RecognizerPool.pool[:idle].size.should == 1
+    end
+    
+    it "should not create new recognizer if idle pool not empty" do
+      $recognizer_pool = {:idle => [mock]}
+      current_idle_pool_size = RecognizerPool.pool[:idle].size
+      Recognizer.should_not_receive(:new).and_return(mock)
+      RecognizerPool.add_new_recognizer_to_idle_pool_if_necessary
+      RecognizerPool.pool[:idle].size.should == current_idle_pool_size      
+    end
+    
+    it "should not create new recognizer if max recognizers limit exceeded" do
+      RecognizerPool::MAX_RECOGNIZERS = 2
+      $recognizer_pool = {:idle => []}
+      current_idle_pool_size = RecognizerPool.pool[:idle].size
+      RecognizerPool.should_receive(:active_recognizers).and_return([mock, mock])
+      Recognizer.should_not_receive(:new).and_return(mock)
+      RecognizerPool.add_new_recognizer_to_idle_pool_if_necessary
+      RecognizerPool.pool[:idle].size.should == current_idle_pool_size
     end
   end
   
