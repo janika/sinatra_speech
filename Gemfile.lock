@@ -3,9 +3,20 @@ GEM
   specs:
     builder (3.0.0)
     daemons (1.1.0)
+    diff-lcs (1.1.2)
     eventmachine (0.12.10)
     json (1.5.1)
     rack (1.2.2)
+    rack-test (0.5.7)
+      rack (>= 1.0)
+    rspec (2.5.0)
+      rspec-core (~> 2.5.0)
+      rspec-expectations (~> 2.5.0)
+      rspec-mocks (~> 2.5.0)
+    rspec-core (2.5.1)
+    rspec-expectations (2.5.0)
+      diff-lcs (~> 1.1.2)
+    rspec-mocks (2.5.0)
     rufus-scheduler (2.0.9)
       tzinfo (>= 0.3.23)
     sinatra (1.2.3)
@@ -24,6 +35,8 @@ PLATFORMS
 DEPENDENCIES
   builder
   json
+  rack-test
+  rspec
   rufus-scheduler
   sinatra
   thin

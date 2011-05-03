@@ -37,7 +37,8 @@ describe "Recognizer API" do
       session.stub!(:id).and_return('id')
       session.should_receive(:created_at_to_s).and_return("created_at")
       post '/recognizer', {}, "HTTP_ACCEPT" => "application/json"
-      last_response.body.should ==  "{\"system_message\":null,\"created_at\":\"created_at\",\"result\":null,\"closed_at\":null,\"final_result_created_at\":null,\"id\":\"id\"}"
+      response_json = JSON.parse(last_response.body)
+      response_json.should ==  {"system_message" => nil,"created_at"=> "created_at","result" => nil,"closed_at" => nil,"final_result_created_at" => nil, "id" => "id"}
     end
     
     it "should add to session pool" do
@@ -55,7 +56,8 @@ describe "Recognizer API" do
     it "should respond with error json if pool limit exceeded" do
       RecognizerPool.should_receive(:get_recognizer).and_return(nil)
       post '/recognizer', {}, "HTTP_ACCEPT" => "application/json"
-      last_response.body.should == "{\"error\":{\"message\":\"No free recognizers\"}}"
+      response = JSON.parse(last_response.body)
+      response.should == {"error" => {"message" => "No free recognizers"}}
     end
   end
   
@@ -92,7 +94,8 @@ describe "Recognizer API" do
       session.should_receive(:system_message).and_return("Recognizer closed")
       RecognizerPool.should_receive(:find_by_session_id).with("asd123").and_return(session)
       get "/recognizer/asd123", {}, "HTTP_ACCEPT" => "application/json"
-      last_response.body.should =="{\"system_message\":\"Recognizer closed\",\"created_at\":\"created_at\",\"result\":\"Hello World!\",\"closed_at\":\"Closed at\",\"final_result_created_at\":\"Final time\",\"id\":\"id\"}"
+      response_json = JSON.parse(last_response.body)
+      response_json.should ==  {"system_message" => "Recognizer closed","created_at"=> "created_at","result" => "Hello World!","closed_at" => "Closed at","final_result_created_at" => "Final time", "id" => "id"}
     end
     
     it "should return error xml if session not found" do
@@ -104,7 +107,8 @@ describe "Recognizer API" do
     it "should return error json if session not found" do
       get "/recognizer/asd123", {}, "HTTP_ACCEPT" => "application/json"
       last_response.should be_ok
-      last_response.body.should == "{\"error\":{\"message\":\"Session with id asd123 not found\"}}"
+      response_json = JSON.parse(last_response.body)
+      response_json.should == {"error" => {"message" => "Session with id asd123 not found"}}
     end  
   end
   
@@ -148,7 +152,8 @@ describe "Recognizer API" do
       RecognizerPool.should_receive(:find_by_session_id).with("asd123").and_return(session)
       session.should_receive(:recognize).and_return(true)
       put "/recognizer/asd123", {}, "HTTP_ACCEPT" => "application/json"
-      last_response.body.should == "{\"system_message\":\"Recognizer closed\",\"created_at\":\"created_at\",\"result\":\"Hello World!\",\"closed_at\":\"Closed at\",\"final_result_created_at\":\"Final time\",\"id\":\"id\"}"
+      response_json = JSON.parse(last_response.body)
+      response_json.should ==  {"system_message" => "Recognizer closed","created_at"=> "created_at","result" => "Hello World!","closed_at" => "Closed at","final_result_created_at" => "Final time", "id" => "id"}
     end
   end
   
@@ -193,7 +198,8 @@ describe "Recognizer API" do
       RecognizerPool.should_receive(:find_by_session_id).with("asd123").and_return(session)
       session.should_receive(:close!).and_return(true)
       put "/recognizer/asd123/end", {}, "HTTP_ACCEPT" => "application/json"
-      last_response.body.should ==  "{\"system_message\":\"Recognizer closed\",\"created_at\":\"created_at\",\"result\":\"Hello World!\",\"closed_at\":\"Closed at\",\"final_result_created_at\":\"Final time\",\"id\":\"id\"}"
+      response_json = JSON.parse(last_response.body)
+      response_json.should ==  {"system_message" => "Recognizer closed","created_at"=> "created_at","result" => "Hello World!","closed_at" => "Closed at","final_result_created_at" => "Final time", "id" => "id"}
     end
   end
 end

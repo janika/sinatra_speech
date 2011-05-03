@@ -3,7 +3,7 @@ require File.dirname(__FILE__) + '/../spec_helper'
 describe RecognizerPool do
   require 'recognizer_pool'
   before(:each) do
-    Recognizer.stub!(:new).and_return(mock)
+    Recognizer.stub!(:new).and_return(mock(:clear => true))
   end
   
   describe "find_by_session_id" do  
@@ -29,7 +29,8 @@ describe RecognizerPool do
       $recognizer_pool = {:idle => [recognizer]}
       RecognizerPool.pool[:idle].size.should == 1
       RecognizerPool.pool.size.should == 1
-      session = RecognizerSession.new      
+      session = RecognizerSession.new
+      recognizer.should_receive(:clear).and_return(true)
       RecognizerPool.add_new_to_active_pool(session)
       session =  RecognizerPool.find_by_session_id(session.id)
       session.should_not be_nil
