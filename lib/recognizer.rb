@@ -4,12 +4,13 @@ class Recognizer
   attr :pipeline
   attr :appsrc
   attr :asr
+  attr :clock
   
   def initialize
     @result = ""
     # construct pipeline
     @pipeline = Gst::Parse.launch("appsrc name=appsrc ! audioconvert ! audioresample ! pocketsphinx name=asr ! fakesink")
-    
+    @clock = Gst::SystemClock.new
     # define input audio properties
     @appsrc = @pipeline.get_child("appsrc")
     caps = Gst::Caps.parse("audio/x-raw-int,rate=16000,channels=1,signed=true,endianness=1234,depth=16,width=16")
@@ -44,6 +45,7 @@ class Recognizer
     pipeline.play      
     buffer = Gst::Buffer.new
     buffer.data = data
+    buffer.timestamp = clock.time
     appsrc.push_buffer(buffer)
   end
   
