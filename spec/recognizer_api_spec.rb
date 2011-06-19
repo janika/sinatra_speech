@@ -10,11 +10,11 @@ describe "Recognizer API" do
   describe "POST recognizer" do
     it "should be add active to recognizer pool" do
       RecognizerPool.pool.size.should == 1
-      RecognizerPool.pool[:idle].size.should == RecognizerPool::NUMBER_OF_INITIAL_RECOGNIZERS
+      RecognizerPool.pool[:idle].size.should == CONFIG[:nr_of_initial_recognizers]
       post '/recognizer'
       last_response.should be_ok
       RecognizerPool.pool.size.should == 2
-      RecognizerPool.pool[:idle].size.should == (RecognizerPool::NUMBER_OF_INITIAL_RECOGNIZERS - 1)
+      RecognizerPool.pool[:idle].size.should == (CONFIG[:nr_of_initial_recognizers] - 1)
     end
     
     it "should be success" do

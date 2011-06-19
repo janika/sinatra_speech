@@ -1,2 +1,4 @@
 tmp/*
 models/*
+.loadpath
+.project

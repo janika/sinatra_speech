@@ -64,7 +64,7 @@ describe RecognizerSession do
   describe "recognition_failing?" do
     it "should be true" do
       session = RecognizerSession.new
-      time = (Time.now - (RecognizerSession::TIMEOUT_FOR_RECOGNITION_FAILURE + 10))
+      time = (Time.now - (CONFIG[:timeout_for_recognition_failure] + 10))
       session.stub!(:created_at).and_return(time)
       session.recognition_failing?.should be_true
     end

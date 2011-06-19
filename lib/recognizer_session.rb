@@ -32,13 +32,13 @@ class RecognizerSession
   end
   
   def recognition_failing?
-    !closed? && ((Time.now - self.created_at) > TIMEOUT_FOR_RECOGNITION_FAILURE) && (self.result.nil? || self.result.size == 0)
+    !closed? && ((Time.now - self.created_at) > CONFIG[:timeout_for_recognition_failure]) && (self.result.nil? || self.result.size == 0)
   end
   
   def end_feed
     begin
-      timeout(TIMEOUT_IN_SECONDS) {
-	self.recognizer.end_feed
+      timeout(CONFIG[:timeout_in_seconds]) {
+	     self.recognizer.end_feed
       }
     rescue Timeout::Error
       self.system_message = "execution expired"
@@ -49,8 +49,8 @@ class RecognizerSession
   
   def work_with_data(data)   
     while buff = data.read(BUFFER_SIZE)
-      self.recognizer.feed_data(buff)
-      self.result =  self.recognizer.result
+    	self.recognizer.feed_data(buff)
+      self.result = self.recognizer.result
     end
   end
   

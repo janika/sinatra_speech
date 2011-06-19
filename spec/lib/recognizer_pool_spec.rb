@@ -50,19 +50,19 @@ describe RecognizerPool do
     
     it "should return nil if max recognizers exceeded" do
       $recognizer_pool = {:idle => []}
-      RecognizerPool::MAX_RECOGNIZERS = 0
+      CONFIG[:max_recognizers] = 0
       RecognizerPool.get_recognizer.should be_nil
     end
   end
     
   describe "organize_pool" do
     before(:each) do 
-      RecognizerPool::MAX_RECOGNIZERS = 1
+      CONFIG[:max_recognizers] = 1
       $recognizer_pool = {:idle => []}
     end
     
     it "should close session if open time exceeded" do
-      time = (Time.now - (RecognizerPool::MAX_OPEN_TIME_IN_SECONDS + 10))
+      time = (Time.now - (CONFIG[:max_session_open_time] + 10))
       session = RecognizerSession.new
       session.stub!(:created_at).and_return(time)
       RecognizerPool.add_new_to_active_pool(session)
@@ -94,7 +94,7 @@ describe RecognizerPool do
     end
     
     it "should remove session if maximum life time exceeded" do
-      time = (Time.now - (RecognizerPool::LIFE_CYCLE_IN_SECONDS + 10))
+      time = (Time.now - (CONFIG[:session_life_cycle] + 10))
       session = RecognizerSession.new
       session.stub!(:created_at).and_return(time)
       RecognizerPool.add_new_to_active_pool(session)
@@ -137,7 +137,7 @@ describe RecognizerPool do
     end
     
     it "should not create new recognizer if max recognizers limit exceeded" do
-      RecognizerPool::MAX_RECOGNIZERS = 2
+      CONFIG[:max_recognizers] = 2
       $recognizer_pool = {:idle => []}
       current_idle_pool_size = RecognizerPool.pool[:idle].size
       RecognizerPool.should_receive(:active_recognizers).and_return([mock, mock])
@@ -156,10 +156,10 @@ describe RecognizerPool do
       session_2 =  RecognizerSession.new
       session_2.recognizer = recognizer_2
       $recognizer_pool = {
-	"1" => session_1,
-	"2" => session_2,
-	"3" => RecognizerSession.new,
-	:idle => [mock]}
+      	"1" => session_1,
+      	"2" => session_2,
+      	"3" => RecognizerSession.new,
+      	:idle => [mock]}
       active = RecognizerPool.active_recognizers
       active.size.should == 2
       active.include?(recognizer_1).should be_true
@@ -169,7 +169,7 @@ describe RecognizerPool do
   
   describe "make_recognizer_idle_if_necessary" do
     before(:each) do
-      RecognizerPool::MAX_IDLE_RECOGNIZERS = 1
+      CONFIG[:max_idle_recognizers] = 1
     end
     
     it "should add to idle pool" do
