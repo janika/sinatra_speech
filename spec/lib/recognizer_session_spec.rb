@@ -80,7 +80,7 @@ describe RecognizerSession do
     end
     it "should be false if result is not empty" do
       session = RecognizerSession.new
-      time = (Time.now - (RecognizerSession::TIMEOUT_FOR_RECOGNITION_FAILURE + 10))
+      time = (Time.now - (CONFIG[:timeout_for_recognition_failure] + 10))
       session.stub!(:created_at).and_return(time)
       session.result = "tere"
       session.recognition_failing?.should be_false
